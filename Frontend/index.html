@@ -4,17 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D-модель</title>
+    
     <link rel="stylesheet" href="style.css">
+
     <script type="importmap">
         {
           "imports": {
             "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js",
             "MTLLoader": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/MTLLoader.js",
             "OBJLoader": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/OBJLoader.js",
-            "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/controls/OrbitControls.js"
+            "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/controls/OrbitControls.js",
+            "jszip": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
           }
         }
-        </script>
+    </script>
+
 </head>
 <body>
     
@@ -30,7 +34,7 @@
                 </section>
                 <input type="text" id="input-description"  placeholder="description">
                 <input type="text" id="without-description" placeholder="avoid">
-                <button class="btn" id="generate-image" onclick="requestImageGen()">Generate image</button>
+                <button class="btn" id="generate-image">Generate image</button>
                 <h5 style = "text-align: center; font-size: 18px;">or</h5>
                 <label class="btn">
                     Upload image
@@ -86,58 +90,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { MTLLoader } from 'MTLLoader';
-        import { OBJLoader } from 'OBJLoader';
-        import { OrbitControls } from 'OrbitControls';
-     
-        var canvas = document.getElementById("meshCanvas");
-        var scene = new THREE.Scene();
-        var camera = new THREE.PerspectiveCamera(55, 800 / 550, 0.1, 1000);
-        var renderer = new THREE.WebGLRenderer({ canvas: canvas });
-        renderer.setSize(800, 550);
-        renderer.setClearColor(0x363a3e); 
-     
-        camera.position.z = 2.5;
-     
-        var controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; 
-        controls.dampingFactor = 0.05;
-        controls.screenSpacePanning = false;
-     
-        var mesh; 
-     
-        var materialLoader = new MTLLoader();
-        var meshLoader = new OBJLoader();
-     
-        materialLoader.load('./MeshBachelor/mesh.mtl', function (materials) {
-            materials.preload();
-            meshLoader.setMaterials(materials);
-            meshLoader.load('./MeshBachelor/mesh.obj', function (loadedMesh) {
-                mesh = loadedMesh; 
-                
-                var textureLoader = new THREE.TextureLoader();
-                var texture = textureLoader.load('./MeshBachelor/mesh_example2_0.png');
-                var material = new THREE.MeshBasicMaterial({ map: texture });
-                mesh.traverse(function (node) {
-                    if (node instanceof THREE.Mesh) {
-                        node.material = material;
-                    }
-                });
-                mesh.position.set(-0.5, 0.5, 0);
-                scene.add(mesh);
-                animate();
-            });
-        });
-     
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-    </script>
 </body>
 </html>
