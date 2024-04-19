@@ -1,5 +1,6 @@
 # Python
 import io
+import zipfile
 from pathlib import Path
 
 # Third-party
@@ -64,14 +65,31 @@ async def post_image(request: serializable.ImageRequestBody):
         media_type="image/png"
     )
 
-@app.get("/mesh")
-async def get_mesh(request: Request):
+@app.post("/mesh")
+async def post_mesh(): # request: Request
     """
     GET Mesh endpoint to get mesh by image & depth?.
     """
     
     # TODO: parse request, inference model, create mesh
     
-    mesh_p = Path("data/")
-    mesh_files = mesh_p.glob("*")
+    # Find files
+    files_dir = Path("data/2/")
+    files_p = list(files_dir.glob("*"))
+    if len(files_p) == 0:
+        return HTTPException(status_code=500, detail="No files found in data directory.")
     
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for file_p in files_p:
+            zip_file.write(file_p, file_p.name)
+    
+    buffer.seek(0)
+    
+    return Response(
+        content=buffer.read(),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": "attachment; filename=mesh.zip"
+        }
+    )
