@@ -13,9 +13,9 @@ import { OrbitControls } from 'OrbitControls';
 
 var canvas = document.getElementById("meshCanvas");
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(55, 800 / 550, 0.1, 1000);
+var camera = new THREE.PerspectiveCamera(55, 450 / 450, 0.1, 1000);
 var renderer = new THREE.WebGLRenderer({ canvas: canvas });
-renderer.setSize(800, 550);
+renderer.setSize(450, 450);
 renderer.setClearColor(0x363a3e); 
 
 camera.position.z = 2.5;
