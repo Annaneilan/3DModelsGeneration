@@ -143,7 +143,7 @@ class MeshGenServerModel:
         image_uuid = self.generate_identifier(for_extension="png")
         
         # Resize to 512x512
-        image = utils.open_image(image_bytes, mode="RGB")
+        image = utils.open_image(io.BytesIO(image_bytes), mode="RGB")
         image = utils.resize_with_aspect(image, 512)
         
         # Write to buffer
@@ -165,6 +165,7 @@ class MeshGenServerModel:
     ) -> io.BytesIO:
         # Task is not completed
         if image_uuid in self.locked_identifiers:
+            print("Task is not completed")
             return None
         
         image_buffer = self.s3_storage.download_file(f"{str(image_uuid)}.png")
@@ -187,7 +188,7 @@ class MeshGenServerModel:
         # Create task
         task_data = {
             "image_uuid": str(image_uuid),
-            "mesh_uuid": mesh_uuid,
+            "mesh_uuid": str(mesh_uuid),
         }
         message = json.dumps(task_data)
         
@@ -203,6 +204,7 @@ class MeshGenServerModel:
     ) -> io.BytesIO:
         # Task is not completed
         if mesh_uuid in self.locked_identifiers:
+            print("Task is not completed")
             return None
         
         mesh_buffer = self.s3_storage.download_file(f"{str(mesh_uuid)}.zip")

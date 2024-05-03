@@ -2,10 +2,10 @@ import io
 from PIL import Image, ImageOps
 
 def open_image(
-    image_bytes: bytes,
+    image_bytes: io.BytesIO,
     mode: str = "RGB"
 ) -> Image.Image:
-    image = Image.open(io.BytesIO(image_bytes))
+    image = Image.open(image_bytes)
     image = ImageOps.exif_transpose(image)
     image = image.convert(mode)
     return image

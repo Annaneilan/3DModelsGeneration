@@ -87,12 +87,18 @@ async def put_image(request: Request):
 
 @app.post("/model/perspective")
 async def post_depth(request: serializable.MeshGenerationRequest):
-    mesh_uuid = app_logic.request_mesh_generation(request, perspective=True)
+    mesh_uuid = app_logic.request_mesh_generation(
+        request.image_uuid,
+        perspective=True
+    )
     return { "uuid": str(mesh_uuid) }
 
 @app.post("/model/object")
 async def post_mesh(request: serializable.MeshGenerationRequest):
-    mesh_uuid = app_logic.request_mesh_generation(request, perspective=False)
+    mesh_uuid = app_logic.request_mesh_generation(
+        request.image_uuid,
+        perspective=False
+    )
     return { "uuid": str(mesh_uuid) }
 
 @app.get("/model/{mesh_uuid}")
