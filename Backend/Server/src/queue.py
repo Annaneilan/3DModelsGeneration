@@ -19,6 +19,9 @@ class QueueMessage:
     ) -> None:
         self.body = body
         self.receipt_handle = receipt_handle
+    
+    def body_json(self):
+        return json.loads(self.body)
 
 class SQSHelper:
     def __init__(

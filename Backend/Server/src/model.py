@@ -4,9 +4,6 @@ import uuid
 import json
 import threading
 
-# Third Party
-from PIL import Image
-
 # Local
 from . import utils
 from .storage import S3Helper
@@ -70,6 +67,9 @@ class MeshGenServerModel:
             self.s3_storage.file_exists(f"{str(new_uuid)}.{for_extension}"):
             new_uuid = uuid.uuid4()
         
+        # Lock identifier locally
+        self.locked_identifiers.add(new_uuid)
+        
         return new_uuid
     
     def observe_results(self):
@@ -85,7 +85,8 @@ class MeshGenServerModel:
             for msg in messages:
                 
                 try:
-                    task_uuid = uuid.UUID(msg.body)
+                    body_json = msg.body_json()
+                    task_uuid = uuid.UUID(body_json["uuid"])
                     
                     if task_uuid in self.locked_identifiers:
                         self.locked_identifiers.remove(task_uuid)
@@ -151,7 +152,10 @@ class MeshGenServerModel:
         buffer.seek(0)
          
         # Upload iamge
-        self.s3_storage.upload_file(f"{str(image_uuid)}.png", buffer)
+        self.s3_storage.upload_file(
+            f"{str(image_uuid)}.png",
+            buffer
+        )
         
         return image_uuid
     
@@ -159,6 +163,10 @@ class MeshGenServerModel:
         self,
         image_uuid: uuid.UUID
     ) -> io.BytesIO:
+        # Task is not completed
+        if image_uuid in self.locked_identifiers:
+            return None
+        
         image_buffer = self.s3_storage.download_file(f"{str(image_uuid)}.png")
         return image_buffer
     
@@ -193,6 +201,10 @@ class MeshGenServerModel:
         self,
         mesh_uuid: uuid.UUID
     ) -> io.BytesIO:
+        # Task is not completed
+        if mesh_uuid in self.locked_identifiers:
+            return None
+        
         mesh_buffer = self.s3_storage.download_file(f"{str(mesh_uuid)}.zip")
         return mesh_buffer
     

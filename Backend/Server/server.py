@@ -15,7 +15,7 @@ from src.model import MeshGenServerModel
 # Init model
 ################################################################
 
-credentials = AWSCredentials.from_json_file("credentials.json")
+credentials = AWSCredentials.from_json_file("../credentials.json")
 app_logic = MeshGenServerModel(credentials)
 
 # Init FastAPI
@@ -67,6 +67,10 @@ async def post_image(request: serializable.ImageGenerationRequest):
 @app.get("/image/{image_uuid}")
 async def get_image(image_uuid: uuid.UUID):
     image_bytes: io.BytesIO = app_logic.download_image(image_uuid)
+    
+    if image_bytes is None:
+        raise HTTPException(status_code=404, detail="Image not found")
+    
     return Response(
         content=image_bytes.getvalue(),
         media_type="image/png"
@@ -94,6 +98,10 @@ async def post_mesh(request: serializable.MeshGenerationRequest):
 @app.get("/model/{mesh_uuid}")
 async def get_mesh(mesh_uuid: uuid.UUID):
     mesh_bytes: io.BytesIO = app_logic.download_mesh_zip(mesh_uuid)
+    
+    if mesh_bytes is None:
+        raise HTTPException(status_code=404, detail="Mesh not found")
+    
     return Response(
         content=mesh_bytes.getvalue(),
         media_type="application/zip"

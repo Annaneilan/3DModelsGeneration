@@ -39,7 +39,8 @@ class AWSCredentials:
         try:
             with open(path, "r") as file:
                 file_content = file.read()
-            return AWSCredentials.from_json(file_content)
+                file_json = json.loads(file_content)
+            return AWSCredentials.from_json(file_json)
         
         except Exception as e:
             print(f"Failed to parse credentials from file: {e}")
