@@ -5,21 +5,38 @@ import uuid
 # FastAPI
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 # Local
 from src import serializable
+from src.credentials import AWSCredentials
 from src.model import MeshGenServerModel
 
-app = FastAPI()
-app_logic = MeshGenServerModel()
+# Init model
+################################################################
+
+credentials = AWSCredentials.from_json_file("credentials.json")
+app_logic = MeshGenServerModel(credentials)
+
+# Init FastAPI
+################################################################
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # On startup
+    yield
+    # On shutdown
+    app_logic.destroy()
+
+app = FastAPI(lifespan=lifespan)
 
 # Disable CORS for development
-app.add_middleware(
+app.add_middleware( 
     CORSMiddleware,
-    allow_origins=["*"],  # Allows only specific origin
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Root
@@ -40,8 +57,12 @@ def root():
 
 @app.post("/image")
 async def post_image(request: serializable.ImageGenerationRequest):
-    image_uuid = app_logic.request_image_generation(request)
-    return { "uuid": image_uuid }
+    #print("POST /image")
+    image_uuid = app_logic.request_image_generation(
+        request.prompt,
+        request.negative_prompt
+    )
+    return { "uuid": str(image_uuid) }
 
 @app.get("/image/{image_uuid}")
 async def get_image(image_uuid: uuid.UUID):
@@ -53,8 +74,9 @@ async def get_image(image_uuid: uuid.UUID):
 
 @app.put("/image")
 async def put_image(request: Request):
-    image_uuid = app_logic.upload_image(request)
-    return { "uuid": image_uuid }
+    image_bytes = await request.body()
+    image_uuid = app_logic.upload_image(image_bytes)
+    return { "uuid": str(image_uuid) }
 
 # Mesh
 ################################################################
@@ -62,12 +84,12 @@ async def put_image(request: Request):
 @app.post("/model/perspective")
 async def post_depth(request: serializable.MeshGenerationRequest):
     mesh_uuid = app_logic.request_mesh_generation(request, perspective=True)
-    return { "uuid": mesh_uuid }
+    return { "uuid": str(mesh_uuid) }
 
 @app.post("/model/object")
 async def post_mesh(request: serializable.MeshGenerationRequest):
     mesh_uuid = app_logic.request_mesh_generation(request, perspective=False)
-    return { "uuid": mesh_uuid }
+    return { "uuid": str(mesh_uuid) }
 
 @app.get("/model/{mesh_uuid}")
 async def get_mesh(mesh_uuid: uuid.UUID):

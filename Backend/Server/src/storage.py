@@ -56,13 +56,13 @@ class S3Helper:
             if int(e.response["Error"]["Code"]) == 404:
                 file_exists = False
             else:
-                logger.error(
+                print(
                     "Unexpected error occurred, when looking for " + \
                     f"{filename} in {self.name}! Details: {e}"
                 )
 
         except Exception as e:
-            logger.error(
+            print(
                 "Unexpected error occurred, when looking for " + \
                 f"{filename} in {self.name}! Details: {e}"
             )
@@ -94,10 +94,10 @@ class S3Helper:
             return file_bytes
         
         except ClientError as e:
-            logger.error(f"Failed to download {filename}! Details: {e}")
+            print(f"Failed to download {filename}! Details: {e}")
         
         except Exception as e:
-            logger.error(f"Failed to download {filename}! Details: {e}")
+            print(f"Failed to download {filename}! Details: {e}")
         
         return None
     
@@ -113,9 +113,9 @@ class S3Helper:
             return True
         
         except ClientError as e:
-            logger.error(f"Failed to upload {filename}! Details: {e}")
+            print(f"Failed to upload {filename}! Details: {e}")
             
         except Exception as e:
-            logger.error(f"Failed to upload {filename}! Details: {e}")
+            print(f"Failed to upload {filename}! Details: {e}")
         
         return False

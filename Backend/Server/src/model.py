@@ -67,15 +67,17 @@ class MeshGenServerModel:
         # Generate random image uuid
         new_uuid = uuid.uuid4()
         while new_uuid in self.locked_identifiers or \
-            self.s3_storage.file_exists(f"{str(image_uuid)}.{for_extension}"):
-            image_uuid = uuid.uuid4()
+            self.s3_storage.file_exists(f"{str(new_uuid)}.{for_extension}"):
+            new_uuid = uuid.uuid4()
         
         return new_uuid
     
     def observe_results(self):
+        print("Observation Thread: Started")
+        
         while not self.result_observation_termination_event.is_set():
             #self.result_observation_termination_event.wait(self.result_observation_interval_s)
-            
+            print("Observation Thread: Running")
             # Read message
             messages = self.sqs_result.receive_messages(max_messages=10)
             
@@ -95,6 +97,16 @@ class MeshGenServerModel:
 
                 # Delete processed message
                 self.sqs_result.delete_message(msg.receipt_handle)
+            
+            print(f"Observation Thread: Processed {len(messages)} messages")
+        
+        print(f"Observation Thread: Finished")
+    
+    # Public (General)
+    ################################################################
+    
+    def destroy(self):
+        self.result_observation_termination_event.set()
     
     # Public (Image)
     ################################################################
@@ -109,7 +121,7 @@ class MeshGenServerModel:
         
         # Create task data
         task_data = {
-            "image_uuid": image_uuid,
+            "image_uuid": str(image_uuid),
             "positive_prompt": positive_prompt,
             "negative_prompt": negative_prompt
         }
@@ -124,21 +136,22 @@ class MeshGenServerModel:
     
     def upload_image(
         self,
-        image_bytes: Image.Image
+        image_bytes: bytes
     ) -> uuid.UUID:
         # Generate new uuid
         image_uuid = self.generate_identifier(for_extension="png")
         
         # Resize to 512x512
-        image = utils.resize_with_aspect(image_bytes, 512)
+        image = utils.open_image(image_bytes, mode="RGB")
+        image = utils.resize_with_aspect(image, 512)
         
         # Write to buffer
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
         buffer.seek(0)
-        
+         
         # Upload iamge
-        self.s3_storage.upload_file(image_bytes, f"{str(image_uuid)}.png")
+        self.s3_storage.upload_file(f"{str(image_uuid)}.png", buffer)
         
         return image_uuid
     
@@ -165,7 +178,7 @@ class MeshGenServerModel:
         
         # Create task
         task_data = {
-            "image_uuid": image_uuid,
+            "image_uuid": str(image_uuid),
             "mesh_uuid": mesh_uuid,
         }
         message = json.dumps(task_data)
