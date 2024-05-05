@@ -19,8 +19,7 @@ canvas {
     font-family: "Madimi One", sans-serif;
     font-weight: 400;
     font-style: normal;
-  }
-  
+}
 
 .kumbh-sans{
     font-family: "Kumbh Sans", sans-serif;
@@ -110,7 +109,6 @@ header {
     height: 35px;
 }
 
-
 .container-form {
     height: calc(100vh - 80px);
     background-color: #f1f1f1;
@@ -140,8 +138,7 @@ header {
     margin-bottom: 7%; 
 }
 
-
-#generated-photo {
+.image-preview {
     width: 30%; 
     height: 450px;
     width: 450px;
@@ -173,7 +170,6 @@ header {
     align-items: center; 
     padding: 20px;
 }
-
 
 .middle-column {
     flex: 0.7; 
@@ -222,7 +218,7 @@ input:focus {
     margin-top: 10px;
 }
 
-#download-photo #input-photo{
+#bt-download-image #bt-upload-image{
     position: absolute;
     bottom: -12%; 
     left: 0;
@@ -237,7 +233,7 @@ input:focus {
     margin: 0 5px; 
 }
 
-.btn, #download-photo:hover, #generate-3d-model-btn:hover {
+.btn, #bt-download-image:hover, #generate-3d-model-btn:hover {
     padding: 10px 20px; 
     border: 1px solid #d2d2d2;
     border-radius: 10px; 
@@ -250,7 +246,7 @@ input:focus {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.239); 
 }
 
-.btn:hover, #download-photo, #generate-3d-model-btn, .btn.active{
+.btn:hover, #bt-download-image, #generate-3d-model-btn, .btn.active{
     background-color: #313131; 
     color: #ffffff; 
 }
@@ -292,5 +288,3 @@ input:focus {
 .text-info p, .text-info-1 p {
      color: #212121;
 }
-
-

@@ -50,16 +50,16 @@
                     </section>
                     <input type="text" id="input-description"  placeholder="description">
                     <input type="text" id="without-description" placeholder="avoid">
-                    <button class="btn" id="generate-image">Generate image</button>
+                    <button class="btn" id="bt-generate-image">Generate image</button>
                 </div>  
                 <div style="position: relative; width: 450px;">
-                    <img id="generated-photo" src="./page_image/placeholder1.png" alt="Згенероване фото">
+                    <img class="image-preview" id="generated-image" src="./page_image/placeholder1.png" alt="Generated Photo">
                     <div class="button-group">
                         <label class="btn upload-btn">
                             Upload image
-                            <input type="file" id="input-photo" accept="image/*" style="display: none;">
+                            <input type="file" id="bt-upload-image" accept="image/*" style="display: none;">
                         </label>
-                        <button class="btn download-btn" id="download-photo">Download</button>
+                        <button class="btn download-btn" id="bt-download-image">Download</button>
                     </div>
                 </div>              
             </div>
@@ -70,7 +70,7 @@
         <div class="container-form">
             <div class="flex-container">
                 <div class="left-column">
-                    <img id="generated-photo" src="./page_image/placeholder1.png" alt="Generated Photo">
+                    <img class="image-preview" id="input-image" src="./page_image/placeholder1.png" alt="Generated Photo">
                     <button class="btn" id="idk-btn">Button???</button>
                 </div>
                 <div class="middle-column">

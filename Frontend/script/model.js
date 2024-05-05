@@ -47,8 +47,13 @@ class MeshLoader {
 
 class MeshGenData {
     constructor() {
+        // Image & image uuid
         this.image = null;
+        this.imageId = null;
+        
+        // Mesh & mesh uuid
         this.mesh = null;
+        this.meshId = null;
         
         this.listeners = {
             // Image
@@ -62,13 +67,30 @@ class MeshGenData {
     }
 
     // Setters / Getters
-    setImage(image) {
+    setImage(
+        image,
+        imageId = null
+    ) {
+        console.log("[MeshGenData:setImage]");
+
         this.triggerEvent('onImageWillChange');
+        
         this.image = image;
+        this.imageId = imageId;
+
         this.triggerEvent('onImageDidChange');
     }
 
-    setMesh(mesh) {
+    resetImage() {
+        setImage('placeholder.jpg');
+    }
+
+    setMesh(
+        mesh,
+        meshId = null
+    ) {
+        console.log("[MeshGenData:setMesh]");
+
         // Cleanup
         this.triggerEvent('onMeshWillChange');
         console.log("Disposing old mesh");
@@ -81,10 +103,14 @@ class MeshGenData {
 
         // Update
         this.mesh = mesh;
+        this.meshId = meshId;
+
         this.triggerEvent('onMeshDidChange');
     }
 
     addListener(event, callback) {
+        console.log("[MeshGenData:addListener] Adding listener for event: " + event);
+
         if (this.listeners[event]) {
             this.listeners[event].push(callback);
         } else {
@@ -93,7 +119,7 @@ class MeshGenData {
     }
 
     triggerEvent(event) {
-        console.log("Triggering event: " + event)
+        console.log("[MeshGenData:triggerEvent] Event: " + event);
 
         if (this.listeners[event]) {
             this.listeners[event].forEach(callback => callback());

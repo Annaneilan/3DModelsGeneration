@@ -79,10 +79,27 @@ class MeshGenController {
         console.log("MeshGenController initialized");
     }
     
-    requestMeshGen() {
-        // settings = this.view.get_settings();
-        // this.model.requestMeshGen(settings);
-    }
+    // requestMeshGen() {
+    //     // settings = this.view.get_settings();
+    //     // this.model.requestMeshGen(settings);
+    //     const response = await fetch(SERVER_URL + '/mesh', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         }
+    //     });
+        
+    //     const blob = await response.blob();
+    //     const files = await unpackZip(blob);
+
+    //     let meshObj = URL.createObjectURL(await files['mesh.obj'].async('blob'));
+    //     let meshMtl = URL.createObjectURL(await files['mesh.mtl'].async('blob'));
+    //     let meshTex = URL.createObjectURL(await files['mesh_0.png'].async('blob'));
+
+    //     let ml = new MeshLoader();
+    //     console.log("Loading mesh");
+    //     ml.loadMesh(meshObj, meshMtl, meshTex);
+    // }
 }
 
 export { MeshGenController, MeshGenView };
