@@ -8,6 +8,7 @@ import threading
 from . import utils
 from .storage import S3Helper
 from .queue import SQSHelper, QueueMessage, AWSCredentials
+from .resource import ResourceStatus, RequestedResource
 
 class MeshGenServerModel:
     def __init__(
@@ -162,14 +163,21 @@ class MeshGenServerModel:
     def download_image(
         self,
         image_uuid: uuid.UUID
-    ) -> io.BytesIO:
+    ) -> RequestedResource:
         # Task is not completed
         if image_uuid in self.locked_identifiers:
             print("Task is not completed")
-            return None
+            return RequestedResource(image_uuid, ResourceStatus.PENDING)
         
+        # Try download image
         image_buffer = self.s3_storage.download_file(f"{str(image_uuid)}.png")
-        return image_buffer
+        status = ResourceStatus.NOT_AVAILABLE if image_buffer is None else ResourceStatus.AVAILABLE
+        result = RequestedResource(
+            image_uuid,
+            status,
+            data=image_buffer
+        )
+        return result
     
     # Public (Mesh)
     ################################################################
@@ -201,12 +209,19 @@ class MeshGenServerModel:
     def download_mesh_zip(
         self,
         mesh_uuid: uuid.UUID
-    ) -> io.BytesIO:
+    ) -> RequestedResource:
         # Task is not completed
         if mesh_uuid in self.locked_identifiers:
             print("Task is not completed")
-            return None
+            return RequestedResource(mesh_uuid, ResourceStatus.PENDING)
         
         mesh_buffer = self.s3_storage.download_file(f"{str(mesh_uuid)}.zip")
-        return mesh_buffer
+        status = ResourceStatus.NOT_AVAILABLE if mesh_buffer is None else ResourceStatus.AVAILABLE
+        result = RequestedResource(
+            mesh_uuid,
+            status,
+            data=mesh_buffer
+        )
+        
+        return result
     

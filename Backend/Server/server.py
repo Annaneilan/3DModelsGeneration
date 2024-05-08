@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 from src import serializable
 from src.credentials import AWSCredentials
 from src.model import MeshGenServerModel
+from src.resource import ResourceStatus
 
 # Init model
 ################################################################
@@ -66,13 +67,19 @@ async def post_image(request: serializable.ImageGenerationRequest):
 
 @app.get("/image/{image_uuid}")
 async def get_image(image_uuid: uuid.UUID):
-    image_bytes: io.BytesIO = app_logic.download_image(image_uuid)
+    result = app_logic.download_image(image_uuid)
     
-    if image_bytes is None:
+    # Error
+    if result.status == ResourceStatus.NOT_AVAILABLE:
         raise HTTPException(status_code=404, detail="Image not found")
     
+    # Not ready, return 202
+    elif result.status == ResourceStatus.PENDING:
+        return Response(status_code=202)
+    
+    # Image is ready
     return Response(
-        content=image_bytes.getvalue(),
+        content=result.data.getvalue(),
         media_type="image/png"
     )
 
@@ -103,12 +110,18 @@ async def post_mesh(request: serializable.MeshGenerationRequest):
 
 @app.get("/model/{mesh_uuid}")
 async def get_mesh(mesh_uuid: uuid.UUID):
-    mesh_bytes: io.BytesIO = app_logic.download_mesh_zip(mesh_uuid)
+    result = app_logic.download_mesh_zip(mesh_uuid)
     
-    if mesh_bytes is None:
-        raise HTTPException(status_code=404, detail="Mesh not found")
+    # Error
+    if result.status == ResourceStatus.NOT_AVAILABLE:
+        raise HTTPException(status_code=404, detail="Image not found")
     
+    # Not ready, return 202
+    elif result.status == ResourceStatus.PENDING:
+        return Response(status_code=202)
+    
+    # Mesh is ready
     return Response(
-        content=mesh_bytes.getvalue(),
+        content=result.data.getvalue(),
         media_type="application/zip"
     )
