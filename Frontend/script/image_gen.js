@@ -16,7 +16,7 @@ class ImageGenView {
     }
     
     setupUI() {
-        this.generatedImage = document.getElementById("generated-image");
+        this.image = document.getElementById("generated-image");
         this.generateImageButton = document.getElementById("bt-generate-image");
         this.uploadImageButton = document.getElementById("bt-upload-image");
         this.downloadImageButton = document.getElementById("bt-download-image");
@@ -40,14 +40,14 @@ class ImageGenView {
     subscribeToModel() {
         this.model.data.addListener(
             'onImageDidChange',
-            () => { this.updateGeneratedImage(); }
+            () => { this.updateImage(); }
         );
     }
 
     // Update UI
-    updateGeneratedImage() {
-        console.log("[ImageGenView:updateGeneratedImage]");
-        this.generatedImage.src = this.model.data.image;
+    updateImage() {
+        console.log("[ImageGenView:updateImage]");
+        this.image.src = this.model.data.image;
     }
 
     // Getters

@@ -4,11 +4,11 @@ import { OrbitControls } from 'OrbitControls';
 class MeshGenView {
     constructor(
         model,
-        controller
+        delegate
     ) {
         // Ref
         this.model = model;
-        this.controller = controller;
+        this.delegate = delegate;
         
         this.setupUI();
         this.setupScene();
@@ -19,8 +19,13 @@ class MeshGenView {
         console.log("MeshGenView initialized");
     }
     
+    // Setup
+    ////////////////////////////////////////////////////////////////
+
     setupUI() {
-        this.generateMeshButton = document.getElementById('generate-3d-model-btn');
+        this.image = document.getElementById('input-image');
+        this.generateModelButton = document.getElementById('generate-3d-model-btn');
+        this.downloadModelButton = document.getElementById('download-3d-model-btn');
     }
 
     setupScene() {
@@ -41,12 +46,32 @@ class MeshGenView {
     }
 
     setupControls() {
-        //this.generateMeshButton.addEventListener('click', requestMeshGen);
+        this.generateModelButton.addEventListener(
+            'click',
+            () => { this.delegate.onGenerateModelClick(); }
+        );
+
+        this.downloadModelButton.addEventListener(
+            'click',
+            () => { this.delegate.onDownloadModelClick(); }
+        );
     }
 
+    // Subscribe
+    ////////////////////////////////////////////////////////////////
+
     subscribeToModel() {
-        this.model.data.addListener('onMeshWillChange', () => { this.removeMeshFromScene });
-        this.model.data.addListener('onMeshDidChange', () => { this.setMeshToScene });
+        this.model.data.addListener('onImageDidChange', () => { this.updateImage(); });
+        this.model.data.addListener('onMeshWillChange', () => { this.removeMeshFromScene(); });
+        this.model.data.addListener('onMeshDidChange', () => { this.setMeshToScene(); });
+    }
+
+    // Logic
+    ////////////////////////////////////////////////////////////////
+
+    updateImage() {
+        console.log("[ImageGenView:updateImage]");
+        this.image.src = this.model.data.image;
     }
 
     removeMeshFromScene() {
@@ -58,13 +83,15 @@ class MeshGenView {
     }
 
     setMeshToScene() {
-        this.scene.add(this.model.mesh);
+        console.log("[MeshGenView:setMeshToScene]");
+        this.scene.add(this.model.data.mesh);
+
         this.animate();
     }
 
     // Update UI
     animate() {
-        requestAnimationFrame(this.animate);
+        requestAnimationFrame(() => this.animate() );
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
     }
@@ -78,28 +105,21 @@ class MeshGenController {
 
         console.log("MeshGenController initialized");
     }
+
+    onGenerateModelClick() {
+        console.log("[MeshGenController:onGenerateModelClick]")
+
+        // Request data
+        // const promptData = {
+        //     prompt: this.view.getImagePromptPositive(),
+        //     negative_prompt: this.view.getImagePromptNegative()
+        // }
+        this.model.requestMeshGen();
+    }
     
-    // requestMeshGen() {
-    //     // settings = this.view.get_settings();
-    //     // this.model.requestMeshGen(settings);
-    //     const response = await fetch(SERVER_URL + '/mesh', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json'
-    //         }
-    //     });
-        
-    //     const blob = await response.blob();
-    //     const files = await unpackZip(blob);
-
-    //     let meshObj = URL.createObjectURL(await files['mesh.obj'].async('blob'));
-    //     let meshMtl = URL.createObjectURL(await files['mesh.mtl'].async('blob'));
-    //     let meshTex = URL.createObjectURL(await files['mesh_0.png'].async('blob'));
-
-    //     let ml = new MeshLoader();
-    //     console.log("Loading mesh");
-    //     ml.loadMesh(meshObj, meshMtl, meshTex);
-    // }
+    onDownloadModelClick() {
+        this.model.downloadMesh();
+    }
 }
 
 export { MeshGenController, MeshGenView };

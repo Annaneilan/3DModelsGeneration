@@ -1,12 +1,30 @@
 import * as THREE from 'three';
 import { MTLLoader } from 'MTLLoader';
 import { OBJLoader } from 'OBJLoader';
+import * as JSZIP from 'jszip';
 
 class MeshLoader {
-    constructor() {
+    constructor(onMeshLoaded) {
         this.materialLoader = new MTLLoader();
         this.meshLoader = new OBJLoader();
         this.textureLoader = new THREE.TextureLoader();
+
+        this.onMeshLoaded = onMeshLoaded;
+        
+        console.log(JSZip)
+    }
+
+    async loadMeshFromZip(zipFile) {
+        
+        let zip = await JSZip.loadAsync(zipFile);
+        let files = await zip.files;
+
+        // Get urls
+        let meshObj = URL.createObjectURL(await files['mesh.obj'].async('blob'));
+        let meshMtl = URL.createObjectURL(await files['mesh.mtl'].async('blob'));
+        let meshTex = URL.createObjectURL(await files['mesh_0.png'].async('blob'));
+
+        this.loadMesh(meshObj, meshMtl, meshTex);
     }
 
     loadMesh(
@@ -24,21 +42,23 @@ class MeshLoader {
             console.log("Materials set")
 
             this.meshLoader.load(meshURL, (loadedMesh) => {
+                var mesh = loadedMesh;
                 console.log("Mesh loaded")
-                loadedMesh.position.set(-0.5, 0.5, 0);
                 
                 var texture = this.textureLoader.load(textureURL);
                 console.log("Texture loaded")
                 var material = new THREE.MeshBasicMaterial({ map: texture });
 
-                loadedMesh.traverse((node) => {
+                mesh.traverse((node) => {
                     if (node instanceof THREE.Mesh) {
                         node.material = material;
                     }
                 });
         
                 console.log("Setting the mesh");
-                MeshGenModel.instance.setMesh(loadedMesh);
+                mesh.position.set(-0.5, 0.5, 0);
+
+                this.onMeshLoaded(mesh);
                 console.log("Mesh set")
             });
         });
@@ -52,6 +72,7 @@ class MeshGenData {
         this.imageId = null;
         
         // Mesh & mesh uuid
+        this.meshZipBlob = null;
         this.mesh = null;
         this.meshId = null;
         
@@ -83,6 +104,11 @@ class MeshGenData {
 
     resetImage() {
         setImage('placeholder.jpg');
+    }
+
+    setMeshZip(meshZip) {
+        console.log("[MeshGenData:setMeshZip]");
+        this.meshZipBlob = meshZip;
     }
 
     setMesh(
@@ -144,36 +170,149 @@ class MeshGenModel {
         this.data = new MeshGenData();
 
         // Helpers
-        this.meshLoader = new MeshLoader();
+        this.meshLoader = new MeshLoader(
+            (loadedMesh) => {
+                console.log(loadedMesh);
+                this.data.setMesh(loadedMesh);
+            }
+        );
 
         console.log("MeshGenModel initialized");
     }
 
-    requestImageGen(promptData) {
-        fetch(this.server_url + '/image', {
+    async requestImageGen(promptData) {
+
+        // Request image generation
+        //try {
+            const response = await fetch(this.server_url + '/image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(promptData)
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to request image');
+            }
+    
+            const responseData = await response.json();
+            const imageId = responseData.uuid;
+
+            // Set image id
+            this.data.imageId = imageId;
+
+            // Function to repeatedly check the status of the image
+            const checkImageStatus = async () => {
+                console.log("[MeshGenModel:requestImageGen] Checking image status");
+
+                const imageResponse = await fetch(this.server_url + `/image/${imageId}`);
+                
+                // Image is ready
+                if (imageResponse.status === 200) {
+                    console.log("[MeshGenModel:requestImageGen] Image is ready");
+
+                    // Check if requested id matches the response
+                    if (imageId === this.data.imageId) {
+                        const imageBlob = await imageResponse.blob();
+                        const imageUrl = URL.createObjectURL(imageBlob);
+                        this.data.setImage(imageUrl, imageId);
+                    }
+                }
+                
+                // Pending
+                else if (imageResponse.status === 202) {
+                    console.log("[MeshGenModel:requestImageGen] Pending");
+                    setTimeout(checkImageStatus, 1000); // Repeat after 1 second
+                }
+                
+                // Error
+                else {
+                    console.error('Error:', response.message);
+                }
+            };
+
+            // Start checking image status
+            checkImageStatus();
+
+        //} catch (error) {
+        //    console.error('Error:', error.message);
+        //}
+    }
+
+    async requestMeshGen() {
+        if (this.data.imageId === null) {
+            // TODO: Upload image & get image id
+            console.log("[MeshGenModel:requestMeshGen] No image to generate mesh from");
+        }
+
+        // 
+        const response = await fetch(this.server_url + '/model/perspective', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(promptData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('HTTP error! Status: ${response.status}');
-            }
-            return response.blob(); // Process the response as Blob
-        })
-        .then(blob => {
-            const imageUrl = URL.createObjectURL(blob);
-            this.data.setImage(imageUrl);
-        })
-        .catch(error => {
-            console.error('Error fetching the image:', error);
+            body: JSON.stringify({ image_uuid: this.data.imageId })
         });
+    
+        if (!response.ok) {
+            throw new Error('Failed to request mesh generation');
+        }
+    
+        const responseData = await response.json();
+        const meshId = responseData.uuid;
+        // const meshId = "e9c78bd4-672e-464a-b9ce-7ab3007069cd";
+
+        // Set image id
+        this.data.meshId = meshId;
+
+        // Function to repeatedly check the status of the mesh generation task
+        const checkMeshStatus = async () => {
+            console.log("[MeshGenModel:requestMeshGen] Checking mesh status");
+
+            const meshReponse = await fetch(this.server_url + `/model/${meshId}`);
+            
+            // Image is ready
+            if (meshReponse.status === 200) {
+                console.log("[MeshGenModel:requestMeshGen] Mesh is ready");
+
+                // Check if requested id matches the response
+                if (meshId === this.data.meshId) {
+                    let meshZipBlob = await meshReponse.blob();
+                    this.data.setMeshZip(meshZipBlob);
+                    this.meshLoader.loadMeshFromZip(meshZipBlob);
+                }
+            }
+            
+            // Pending - repeat
+            else if (meshReponse.status === 202) {
+                console.log("[MeshGenModel:requestMeshGen] Pending");
+                setTimeout(checkMeshStatus, 1000); // Repeat after 1 second
+            }
+            
+            // Error
+            else {
+                console.error('Error:', response.message);
+            }
+        };
+
+        checkMeshStatus();
     }
 
-    requestMeshGen(settings) {
+    async downloadMesh()
+    {
+        if (this.data.meshZipBlob === null) {
+            console.log("[MeshGenModel:downloadMesh] No mesh to download");
+            return;
+        }
 
+        let a = document.createElement('a');
+        a.href = URL.createObjectURL(this.data.meshZipBlob);;
+        a.download = 'mesh.zip';
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 }
 

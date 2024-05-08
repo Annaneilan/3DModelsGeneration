@@ -50,7 +50,15 @@
                     </section>
                     <input type="text" id="input-description"  placeholder="description">
                     <input type="text" id="without-description" placeholder="avoid">
-                    <button class="btn" id="bt-generate-image">Generate image</button>
+                    
+                    <!-- <button class="btn" id="bt-generate-image">Generate image</button> -->
+                    
+                    <!-- <button class="btn btn-primary" id="bt-generate-image" type="button" disabled> -->
+                    <button class="btn btn-primary" id="bt-generate-image" type="button">
+                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                        <span role="status">Loading...</span>
+                    </button>
+
                 </div>  
                 <div style="position: relative; width: 450px;">
                     <img class="image-preview" id="generated-image" src="./page_image/placeholder1.png" alt="Generated Photo">
@@ -110,7 +118,7 @@
                     <div id="generated-3d-model">
                         <canvas id="meshCanvas"></canvas>
                     </div>
-                    <button class="btn" id="download-model-3d">Download model</button>
+                    <button class="btn" id="download-3d-model-btn">Download model</button>
                 </div>
             </div>
         </div>
