@@ -66,12 +66,25 @@ class MeshGenView {
         this.model.data.addListener('onMeshDidChange', () => { this.setMeshToScene(); });
     }
 
-    // Logic
+    // UI
     ////////////////////////////////////////////////////////////////
 
     updateImage() {
         console.log("[ImageGenView:updateImage]");
         this.image.src = this.model.data.image;
+    }
+    
+    activateGenerateButton() {
+        this.generateModelButton.disabled = false;
+        this.generateModelButton.innerHTML = "Generate Model";
+    }
+
+    deactivateGenerateButton() {
+        this.generateModelButton.disabled = true;
+        this.generateModelButton.innerHTML = `
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span role="status">Loading...</span>
+        `;
     }
 
     removeMeshFromScene() {
@@ -84,12 +97,14 @@ class MeshGenView {
 
     setMeshToScene() {
         console.log("[MeshGenView:setMeshToScene]");
+        
+        this.activateGenerateButton();
+        
         this.scene.add(this.model.data.mesh);
-
         this.animate();
     }
 
-    // Update UI
+    // Animate utility
     animate() {
         requestAnimationFrame(() => this.animate() );
         this.controls.update();
@@ -108,6 +123,7 @@ class MeshGenController {
 
     onGenerateModelClick() {
         console.log("[MeshGenController:onGenerateModelClick]")
+        this.view.deactivateGenerateButton();
 
         // Request data
         // const promptData = {

@@ -50,15 +50,9 @@
                     </section>
                     <input type="text" id="input-description"  placeholder="description">
                     <input type="text" id="without-description" placeholder="avoid">
-                    
-                    <!-- <button class="btn" id="bt-generate-image">Generate image</button> -->
-                    
-                    <!-- <button class="btn btn-primary" id="bt-generate-image" type="button" disabled> -->
-                    <button class="btn btn-primary" id="bt-generate-image" type="button">
-                        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                        <span role="status">Loading...</span>
+                    <button class="btn" id="bt-generate-image" type="button">
+                        Generate Image
                     </button>
-
                 </div>  
                 <div style="position: relative; width: 450px;">
                     <img class="image-preview" id="generated-image" src="./page_image/placeholder1.png" alt="Generated Photo">
@@ -111,8 +105,11 @@
                         <button class="btn option" id="pointcloudBtn">
                             <span class="option-text">Point Cloud</span>
                         </button>
-                    </div>                    
-                    <button class="btn" id="generate-3d-model-btn">Generate</button>
+                    </div>
+                    <button class="btn" id="generate-3d-model-btn" type="button">
+                        Generate Model
+                    </button>
+
                 </div>
                 <div class="right-column" >
                     <div id="generated-3d-model">

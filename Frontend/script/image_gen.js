@@ -48,6 +48,20 @@ class ImageGenView {
     updateImage() {
         console.log("[ImageGenView:updateImage]");
         this.image.src = this.model.data.image;
+        this.activateGenerateButton();
+    }
+
+    activateGenerateButton() {
+        this.generateImageButton.disabled = false;
+        this.generateImageButton.innerHTML = "Generate Image";
+    }
+
+    deactivateGenerateButton() {
+        this.generateImageButton.disabled = true;
+        this.generateImageButton.innerHTML = `
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span role="status">Loading...</span>
+        `;
     }
 
     // Getters
@@ -70,7 +84,10 @@ class ImageGenController {
 
     requestImageGen() {
         console.log("[ImageGenController:requestImageGen]")
-
+        
+        // Deactivate button
+        this.view.deactivateGenerateButton();
+        
         // Request data
         const promptData = {
             prompt: this.view.getImagePromptPositive(),

@@ -77,7 +77,7 @@ class MeshGenServerModel:
         print(f"Looking for image generation tasks")
         tasks = self.sqs_image_gen.receive_messages(
             max_messages=1,
-            wait_time=1
+            wait_time=20
         )
         print(f"Read {len(tasks)} tasks from image queue")
         
