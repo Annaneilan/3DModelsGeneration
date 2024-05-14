@@ -1,5 +1,33 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'OrbitControls';
+import { MeshGenParams } from './entities.js';
+
+class MeshGenParamView {
+    constructor(formDivId="mesg-gen-params") {
+        this.formDiv = document.getElementById(formDivId);
+        this.setupUI();
+    }
+
+    setupUI() {
+        this.formDiv.querySelectorAll('.btn.option').forEach(button => {
+            button.addEventListener('click', function() {
+                let siblings = this.parentNode.querySelectorAll('.btn.option');
+                siblings.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    }
+
+    getSelectedOptions() {
+        // Get perspective button and check if .active
+        let perspective = this.formDiv.querySelector('#gen-perspective-btn').classList.contains('active');
+        let textured = this.formDiv.querySelector('#gen-textured-btn').classList.contains('active');
+        let meshing = this.formDiv.querySelector('#gen-mesh-btn').classList.contains('active');
+
+        let result = new MeshGenParams(perspective, textured, meshing);
+        return result;
+    }
+}
 
 class MeshGenView {
     constructor(
@@ -11,7 +39,6 @@ class MeshGenView {
         this.delegate = delegate;
         
         this.setupUI();
-        this.setupScene();
 
         this.setupControls();
         this.subscribeToModel();
@@ -23,12 +50,18 @@ class MeshGenView {
     ////////////////////////////////////////////////////////////////
 
     setupUI() {
+        this.setupUIElements();
+        this.setupUIScene();
+        this.meshGenParamsView = new MeshGenParamView("gen-params");
+    }
+
+    setupUIElements() {
         this.image = document.getElementById('input-image');
         this.generateModelButton = document.getElementById('generate-3d-model-btn');
         this.downloadModelButton = document.getElementById('download-3d-model-btn');
     }
 
-    setupScene() {
+    setupUIScene() {
         this.canvas = document.getElementById("meshCanvas");
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(55, 800 / 550, 0.1, 1000);
@@ -123,14 +156,17 @@ class MeshGenController {
 
     onGenerateModelClick() {
         console.log("[MeshGenController:onGenerateModelClick]")
-        this.view.deactivateGenerateButton();
 
-        // Request data
-        // const promptData = {
-        //     prompt: this.view.getImagePromptPositive(),
-        //     negative_prompt: this.view.getImagePromptNegative()
-        // }
-        this.model.requestMeshGen();
+        // Update UI 
+        this.view.deactivateGenerateButton();
+        
+        // Get selected options
+        let meshGenParams = this.view.meshGenParamsView.getSelectedOptions();
+        
+        console.log(meshGenParams);
+
+        // Request generation
+        this.model.requestMeshGen(meshGenParams);
     }
     
     onDownloadModelClick() {

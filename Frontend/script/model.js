@@ -56,6 +56,7 @@ class MeshLoader {
                 });
         
                 console.log("Setting the mesh");
+                
                 mesh.position.set(-0.5, 0.5, 0);
 
                 this.onMeshLoaded(mesh);
@@ -176,7 +177,6 @@ class MeshGenModel {
                 this.data.setMesh(loadedMesh);
             }
         );
-
         console.log("MeshGenModel initialized");
     }
 
@@ -240,19 +240,26 @@ class MeshGenModel {
         //}
     }
 
-    async requestMeshGen() {
+    async requestMeshGen(genParams) {
         if (this.data.imageId === null) {
             // TODO: Upload image & get image id
             console.log("[MeshGenModel:requestMeshGen] No image to generate mesh from");
         }
 
-        // 
-        const response = await fetch(this.server_url + '/model/perspective', {
+        // Request object
+        let meshGenerationParams = {
+            image_uuid: this.data.imageId,
+            perspective: genParams.perspective,
+            textured: genParams.textured,
+            meshing: genParams.meshing
+        }
+
+        const response = await fetch(this.server_url + '/model', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ image_uuid: this.data.imageId })
+            body: JSON.stringify(meshGenerationParams)
         });
     
         if (!response.ok) {
@@ -261,7 +268,7 @@ class MeshGenModel {
     
         const responseData = await response.json();
         const meshId = responseData.uuid;
-        // const meshId = "e9c78bd4-672e-464a-b9ce-7ab3007069cd";
+        //const meshId = "2dd3b975-86d5-4104-8aa1-a15440d8f182";
 
         // Set image id
         this.data.meshId = meshId;

@@ -182,10 +182,34 @@ class MeshGenServerModel:
     # Public (Mesh)
     ################################################################
     
+    #def request_mesh_generation(
+    #    self,
+    #    image_uuid: uuid.UUID,
+    #    perspective: bool = False
+    #) -> uuid.UUID:
+    #    # Validate image is uploaded to S3
+    #    assert self.s3_storage.file_exists(f"{str(image_uuid)}.png"), "Image not found!"
+    #    
+    #    # Generate mesh uuid
+    #    mesh_uuid = self.generate_identifier(for_extension="zip")
+    #    
+    #    # Create task
+    #    task_data = {
+    #        "image_uuid": str(image_uuid),
+    #        "mesh_uuid": str(mesh_uuid),
+    #    }
+    #    message = json.dumps(task_data)
+    #    
+    #    # Send message
+    #    queue = self.sqs_perspective_gen if perspective else self.sqs_object_gen
+    #    queue.send_message(message)
+    #    
+    #    return mesh_uuid
+    
     def request_mesh_generation(
         self,
         image_uuid: uuid.UUID,
-        perspective: bool = False
+        perspective: bool,
     ) -> uuid.UUID:
         # Validate image is uploaded to S3
         assert self.s3_storage.file_exists(f"{str(image_uuid)}.png"), "Image not found!"

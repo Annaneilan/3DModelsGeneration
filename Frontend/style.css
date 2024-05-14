@@ -246,17 +246,24 @@ input:focus {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.239); 
 }
 
-.btn:hover, #bt-download-image, #generate-3d-model-btn, .btn.active{
-    background-color: #313131; 
+.btn:hover, #bt-download-image, #generate-3d-model-btn, .btn.active {
+    background-color: #313131;
     color: #ffffff; 
 }
 
-#generate-3d-model-btn, #generate-3d-model-btn:hover{
+.btn:disabled {
+    background-color: #313131;
+    border-color: #313131;
+    color: #ffffff; 
+    opacity: 1.0;
+}
+
+#generate-3d-model-btn, #generate-3d-model-btn:hover {
     padding: 5%;
     margin-top: 10%;
 }
 
-#download-3d-model-btn, #idk-btn{
+#download-3d-model-btn, #idk-btn {
     width: 450px; 
 }
 
