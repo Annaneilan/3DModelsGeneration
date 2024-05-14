@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 
 # Third-party
+import cv2
 import numpy as np
 import open3d as o3d
 
@@ -131,7 +132,7 @@ class MeshGenServerModel:
         print(f"Looking for mesh generation tasks")
         tasks = self.sqs_perspective_gen.receive_messages(
             max_messages=1,
-            wait_time=1
+            wait_time=20
         )
         print(f"Read {len(tasks)} tasks from p-mesh queue")
         
@@ -147,13 +148,14 @@ class MeshGenServerModel:
                 print(image_bytes)
                 
                 image_pil = utils.open_image(image_bytes, mode="RGB")
+                #image_pil = utils.resize_with_aspect(image_pil, 256)
                 image_np = np.array(image_pil)
                 
                 print("Inferencing")
                 depth_map = self.mde(image_np)
 
                 print("Reconstructing")
-                mesh = self.depth_to_mesh(image_np, depth_map)
+                mesh = self.depth_to_mesh(image_np, depth_map, resolution=256)
                 buffer = self.mesh_to_zip(mesh)
 
                 print("Saving mesh")
@@ -180,9 +182,15 @@ class MeshGenServerModel:
         self,
         image: np.ndarray,
         depth_map: np.ndarray,
+        resolution: int = 512
     ) -> o3d.geometry.TriangleMesh:
+        depth_map = cv2.resize(
+            depth_map.astype(np.float32),
+            (resolution, resolution)
+        )
         mask = depth_map > 5
         depth_map /= -200
+        
         v_grid, v_num = depth.create_pixel_vertice_mapping(mask)
         mesh = depth.create_mesh(image, depth_map, v_grid, v_num)
         
