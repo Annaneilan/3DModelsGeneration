@@ -14,20 +14,36 @@ class MeshLoader {
         console.log(JSZip)
     }
 
-    async loadMeshFromZip(zipFile) {
-        
+    async loadMeshFromZip(
+        zipFile,
+        textured = false
+    ) {
+        // Unzip
         let zip = await JSZip.loadAsync(zipFile);
         let files = await zip.files;
 
         // Get urls
         let meshObj = URL.createObjectURL(await files['mesh.obj'].async('blob'));
-        let meshMtl = URL.createObjectURL(await files['mesh.mtl'].async('blob'));
-        let meshTex = URL.createObjectURL(await files['mesh_0.png'].async('blob'));
 
-        this.loadMesh(meshObj, meshMtl, meshTex);
+        if (textured) {
+            let meshMtl = URL.createObjectURL(await files['mesh.mtl'].async('blob'));
+            let meshTex = URL.createObjectURL(await files['mesh_0.png'].async('blob'));
+            this.loadTexturedMesh(meshObj, meshMtl, meshTex);
+        } else {
+            this.loadMesh(meshObj);
+        }
     }
 
-    loadMesh(
+    loadMesh(meshURL) {
+        this.meshLoader.load(meshURL, (loadedMesh) => {
+            console.log("Mesh loaded")
+            var mesh = loadedMesh;
+            mesh.position.set(-0.5, 0.5, 0);
+            this.onMeshLoaded(mesh);
+        });
+    }
+
+    loadTexturedMesh(
         meshURL,
         materialURL,
         textureURL,
@@ -54,13 +70,8 @@ class MeshLoader {
                         node.material = material;
                     }
                 });
-        
-                console.log("Setting the mesh");
-                
                 mesh.position.set(-0.5, 0.5, 0);
-
                 this.onMeshLoaded(mesh);
-                console.log("Mesh set")
             });
         });
     }
@@ -68,14 +79,12 @@ class MeshLoader {
 
 class MeshGenData {
     constructor() {
-        // Image & image uuid
+        this.projectId = null;
+
         this.image = null;
-        this.imageId = null;
-        
-        // Mesh & mesh uuid
         this.meshZipBlob = null;
+
         this.mesh = null;
-        this.meshId = null;
         
         this.listeners = {
             // Image
@@ -91,14 +100,12 @@ class MeshGenData {
     // Setters / Getters
     setImage(
         image,
-        imageId = null
     ) {
         console.log("[MeshGenData:setImage]");
 
         this.triggerEvent('onImageWillChange');
         
         this.image = image;
-        this.imageId = imageId;
 
         this.triggerEvent('onImageDidChange');
     }
@@ -219,26 +226,26 @@ class MeshGenModel {
             }
     
             const responseData = await response.json();
-            const imageId = responseData.uuid;
+            const projectId = responseData.project_id;
 
             // Set image id
-            this.data.imageId = imageId;
+            this.data.projectId = projectId;
 
             // Function to repeatedly check the status of the image
             const checkImageStatus = async () => {
                 console.log("[MeshGenModel:requestImageGen] Checking image status");
 
-                const imageResponse = await fetch(this.server_url + `/image/${imageId}`);
+                const imageResponse = await fetch(this.server_url + `/image/${projectId}`);
                 
                 // Image is ready
                 if (imageResponse.status === 200) {
                     console.log("[MeshGenModel:requestImageGen] Image is ready");
 
                     // Check if requested id matches the response
-                    if (imageId === this.data.imageId) {
+                    if (projectId === this.data.projectId) {
                         const imageBlob = await imageResponse.blob();
                         const imageUrl = URL.createObjectURL(imageBlob);
-                        this.data.setImage(imageUrl, imageId);
+                        this.data.setImage(imageUrl);
                     }
                 }
                 
@@ -265,18 +272,18 @@ class MeshGenModel {
 
     async requestMeshGen(genParams) {
         //try {
-        if (this.data.imageId === null) {
+        if (this.data.projectId === null) {
             // TODO: Upload image & get image id
             console.log("[MeshGenModel:requestMeshGen] No image to generate mesh from");
         }
 
         // Request object
         let meshGenerationParams = {
-            image_uuid: this.data.imageId,
+            project_id: this.data.projectId,
             perspective: genParams.perspective,
             textured: genParams.textured,
-            //meshing: genParams.meshing
         }
+        console.log(meshGenerationParams);
 
         const response = await fetch(this.server_url + '/model', {
             method: 'POST',
@@ -290,32 +297,36 @@ class MeshGenModel {
             throw new Error('Failed to request mesh generation');
         }
     
-        const responseData = await response.json();
-        const meshId = responseData.uuid;
-        //const meshId = "2dd3b975-86d5-4104-8aa1-a15440d8f182";
-
-        // Set image id
-        this.data.meshId = meshId;
-
         //} catch (error) {
         //    console.error('Error:', error.message);
         //}
+        const projectId = this.data.projectId;
 
         // Function to repeatedly check the status of the mesh generation task
         const checkMeshStatus = async () => {
             console.log("[MeshGenModel:requestMeshGen] Checking mesh status");
+            
+            // GET mesh with query params
+            const queryParams = new URLSearchParams({
+                perspective: genParams.perspective,
+                textured: genParams.textured,
+            });
 
-            const meshReponse = await fetch(this.server_url + `/model/${meshId}`);
+            const meshReponse = await fetch(
+                this.server_url + `/model/${projectId}?${queryParams}`, {
+                method: "GET",
+            });
             
             // Image is ready
             if (meshReponse.status === 200) {
                 console.log("[MeshGenModel:requestMeshGen] Mesh is ready");
 
                 // Check if requested id matches the response
-                if (meshId === this.data.meshId) {
+                if (projectId === this.data.projectId) {
                     let meshZipBlob = await meshReponse.blob();
+
                     this.data.setMeshZip(meshZipBlob);
-                    this.meshLoader.loadMeshFromZip(meshZipBlob);
+                    this.meshLoader.loadMeshFromZip(meshZipBlob, meshGenerationParams.textured);
                 }
             }
             
