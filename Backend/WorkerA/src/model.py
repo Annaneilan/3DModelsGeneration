@@ -11,6 +11,7 @@ import open3d as o3d
 
 # Local
 from . import depth, diffusion, utils
+from .data_key import DataKey
 from .aws.storage import S3Helper
 from .aws.queue import SQSHelper, QueueMessage
 from .aws.credentials import AWSCredentials
@@ -19,10 +20,13 @@ class MeshGenServerModel:
     def __init__(
         self,
         credentials: AWSCredentials = None,
-        temp_dir: Path = "data/temp"
+        temp_dir: Path = "data/temp",
+        wait_time: int = 2
     ) -> None:
         self.temp_dir = Path(temp_dir)
         self.temp_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.wait_time = wait_time
         
         self.setup_aws(credentials)
         self.setup_sd()
@@ -78,7 +82,7 @@ class MeshGenServerModel:
         print(f"Looking for image generation tasks")
         tasks = self.sqs_image_gen.receive_messages(
             max_messages=1,
-            wait_time=20
+            wait_time=self.wait_time
         )
         print(f"Read {len(tasks)} tasks from image queue")
         
@@ -101,7 +105,7 @@ class MeshGenServerModel:
                 
                 print("Saving image")
                 self.s3_storage.upload_file(
-                    f"{task_data['image_uuid']}.png",
+                    DataKey.image(task_data["project_id"]),
                     image_bytes
                 )
             
@@ -114,8 +118,8 @@ class MeshGenServerModel:
                 
                 # Send result message
                 message = json.dumps({
-                    "uuid": task_data["image_uuid"],
-                    "status": "OK"
+                    "project_id": task_data["project_id"],
+                    "task_type": "image_gen"
                 })
                 self.sqs_result.send_message(message)
     
@@ -132,7 +136,7 @@ class MeshGenServerModel:
         print(f"Looking for mesh generation tasks")
         tasks = self.sqs_perspective_gen.receive_messages(
             max_messages=1,
-            wait_time=20
+            wait_time=self.wait_time
         )
         print(f"Read {len(tasks)} tasks from p-mesh queue")
         
@@ -143,24 +147,30 @@ class MeshGenServerModel:
             try:
                 print("Loading image")
                 image_bytes = self.s3_storage.download_file(
-                    f"{task_data['image_uuid']}.png"
+                    DataKey.image(task_data["project_id"])
                 )
-                print(image_bytes)
                 
                 image_pil = utils.open_image(image_bytes, mode="RGB")
-                #image_pil = utils.resize_with_aspect(image_pil, 256)
                 image_np = np.array(image_pil)
                 
                 print("Inferencing")
                 depth_map = self.mde(image_np)
 
                 print("Reconstructing")
-                mesh = self.depth_to_mesh(image_np, depth_map, resolution=256)
-                buffer = self.mesh_to_zip(mesh)
-
-                print("Saving mesh")
+                textured_mesh = self.generate_textured_mesh(image_np, depth_map, resolution=256)
+                texturless_mesh = self.create_texturless_mesh(textured_mesh)
+                
+                print("Saving textured mesh")
+                buffer = self.mesh_to_zip(textured_mesh)
                 self.s3_storage.upload_file(
-                    f"{task_data['mesh_uuid']}.zip",
+                    DataKey.mesh(task_data["project_id"], perspective=True, textured=True),
+                    buffer
+                )
+                
+                print("Saving mesh")
+                buffer = self.mesh_to_zip(texturless_mesh)
+                self.s3_storage.upload_file(
+                    DataKey.mesh(task_data["project_id"], perspective=True, textured=False),
                     buffer
                 )
             
@@ -173,12 +183,12 @@ class MeshGenServerModel:
                 
                 # Send result message
                 message = json.dumps({
-                    "uuid": task_data["mesh_uuid"],
-                    "status": "OK"
+                    "project_id": task_data["project_id"],
+                    "task_type": "pmesh_gen"
                 })
                 self.sqs_result.send_message(message)
     
-    def depth_to_mesh(
+    def generate_textured_mesh(
         self,
         image: np.ndarray,
         depth_map: np.ndarray,
@@ -199,10 +209,22 @@ class MeshGenServerModel:
         
         return mesh
     
+    def create_texturless_mesh(
+        textured_mesh: o3d.geometry.TriangleMesh
+    ) -> o3d.geometry.TriangleMesh:
+        mesh = o3d.geometry.TriangleMesh()
+        mesh.vertices = textured_mesh.vertices
+        mesh.triangles = textured_mesh.triangles
+        return mesh
+    
     def mesh_to_zip(
         self,
         mesh: o3d.geometry.TriangleMesh
     ):
+        # Clean temp dir
+        for file_p in self.temp_dir.glob("*"):
+            file_p.unlink()
+        
         # Save to temp dir
         mesh_p = self.temp_dir / "mesh.obj"
         o3d.io.write_triangle_mesh(str(mesh_p), mesh)
