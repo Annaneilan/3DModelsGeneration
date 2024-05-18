@@ -57,10 +57,11 @@ class MeshGenView {
         this.image = document.getElementById('input-image');
         this.generateModelButton = document.getElementById('generate-3d-model-btn');
         this.downloadModelButton = document.getElementById('download-3d-model-btn');
+
+        this.canvas = document.getElementById("meshCanvas");
     }
 
     setupUIScene() {
-        this.canvas = document.getElementById("meshCanvas");
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(55, 800 / 470, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
@@ -74,6 +75,14 @@ class MeshGenView {
         this.controls.enableDamping = true; 
         this.controls.dampingFactor = 0.05;
         this.controls.screenSpacePanning = false;
+        
+        // Add lights
+        var ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(ambientLight);
+
+        //var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        //directionalLight.position.set(1, 1, 1);
+        //this.scene.add(directionalLight);
     }
 
     setupControls() {
@@ -121,11 +130,13 @@ class MeshGenView {
     }
 
     removeMeshFromScene() {
-        if (this.model.mesh) {
-            this.scene.remove(this.model.mesh);
+        let oldMesh = this.model.data.mesh;
+        if (oldMesh) {
+            var selectedObject = this.scene.getObjectByName(oldMesh.name);
+            this.scene.remove(selectedObject);
         }
-        //renderer.renderLists.dispose();
-        console.log("TODO: Dispose of old renders");
+        //this.renderer.renderLists.dispose();
+        //this.animate();
     }
 
     setMeshToScene() {

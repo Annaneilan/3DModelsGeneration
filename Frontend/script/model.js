@@ -38,6 +38,7 @@ class MeshLoader {
         this.meshLoader.load(meshURL, (loadedMesh) => {
             console.log("Mesh loaded")
             var mesh = loadedMesh;
+            mesh.name = "mesh";
             mesh.position.set(-0.5, 0.5, 0);
             this.onMeshLoaded(mesh);
         });
@@ -59,6 +60,7 @@ class MeshLoader {
 
             this.meshLoader.load(meshURL, (loadedMesh) => {
                 var mesh = loadedMesh;
+                mesh.name = "mesh";
                 console.log("Mesh loaded")
                 
                 var texture = this.textureLoader.load(textureURL);

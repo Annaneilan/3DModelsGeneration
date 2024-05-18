@@ -198,6 +198,12 @@ class MeshGenServerModel:
         # Validate image is uploaded to S3
         assert self.s3_storage.file_exists(DataKey.image(str(project_id))), "Image not found!"
         
+        if self.s3_storage.file_exists(
+            DataKey.mesh(str(project_id), perspective=perspective)
+        ):
+            print("Mesh already exists")
+            return
+        
         # Create task
         task_data = { "project_id": str(project_id) }
         message = json.dumps(task_data)
