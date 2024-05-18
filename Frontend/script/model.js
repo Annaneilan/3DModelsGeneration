@@ -100,11 +100,13 @@ class MeshGenData {
     }
 
     // Setters / Getters
-    setImage(
-        image,
-    ) {
-        console.log("[MeshGenData:setImage]");
+    setProjectId(projectId) {
+        console.log("[MeshGenData:setProjectId]");
+        this.projectId = projectId;
+    }
 
+    setImage(image) {
+        console.log("[MeshGenData:setImage]");
         this.triggerEvent('onImageWillChange');
         
         this.image = image;
@@ -131,6 +133,7 @@ class MeshGenData {
         this.triggerEvent('onMeshWillChange');
         console.log("Disposing old mesh");
         console.log(this.mesh);
+
         // FIXME: Delete old mesh
         // if (this.mesh) {
         //     this.mesh.geometry.dispose();
@@ -213,6 +216,33 @@ class MeshGenModel {
         }
     }
 
+    async uploadImage() {
+        console.log("[MeshGenModel:uploadImage] Uploading image");
+        
+        if (this.data.image === null) {
+            console.log("[MeshGenModel:uploadImage] No image to upload");
+            return;
+        }
+        
+        let imageBlob = await fetch(this.data.image).then(r => r.blob());
+        const response = await fetch(this.server_url + '/image', {
+            method: "PUT",
+            headers: {
+                'Content-Type': 'application/image'
+            },
+            body: imageBlob
+        });
+        console.log("[MeshGenModel:uploadImage] Response:", response);
+
+        if (response.ok) {
+            const responseData = await response.json();
+            this.data.setProjectId(responseData.project_id);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     async requestImageGen(promptData) {
         //try {
             const response = await fetch(this.server_url + '/image', {
@@ -274,11 +304,19 @@ class MeshGenModel {
 
     async requestMeshGen(genParams) {
         //try {
-        if (this.data.projectId === null) {
-            // TODO: Upload image & get image id
+        if (this.data.image === null) {
             console.log("[MeshGenModel:requestMeshGen] No image to generate mesh from");
-        }
+        
+        } else if (this.data.projectId === null) {
+            console.log("[MeshGenModel:requestMeshGen] No project id, uploading image");
 
+            let uploadingResult = await this.uploadImage();
+            if (!uploadingResult) {
+                console.error("[MeshGenModel:requestMeshGen] Failed to upload image");
+                return;
+            }
+        }
+        
         // Request object
         let meshGenerationParams = {
             project_id: this.data.projectId,

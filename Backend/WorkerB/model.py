@@ -21,10 +21,13 @@ class ObjectMeshGenModel:
     def __init__(
         self,
         credentials: AWSCredentials = None,
-        temp_dir: Path = "data/temp"
+        temp_dir: Path = "data/temp",
+        wait_time: int = 2,
     ) -> None:
         self.temp_dir = Path(temp_dir)
         self.temp_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.wait_time = wait_time
         
         self.setup_aws(credentials)
     
@@ -62,7 +65,7 @@ class ObjectMeshGenModel:
         print(f"Looking for mesh generation tasks")
         tasks = self.sqs_object_gen.receive_messages(
             max_messages=1,
-            wait_time=20
+            wait_time=self.wait_time
         )
         print(f"Read {len(tasks)} tasks from o-mesh queue")
         
@@ -101,7 +104,7 @@ class ObjectMeshGenModel:
                 
                 print("Saving textured mesh")
                 self.s3_storage.upload_file(
-                    DataKey.mesh(task_data["project_id"], perspective=False, textured=False),
+                    DataKey.mesh(task_data["project_id"], perspective=False, textured=True),
                     buffer
                 )
         
