@@ -194,6 +194,9 @@ class MeshGenServerModel:
         v_grid, v_num = depth.create_pixel_vertice_mapping(mask)
         mesh = depth.create_mesh(image, depth_map, v_grid, v_num)
         
+        # Center mesh
+        mesh.translate(-mesh.get_center())
+        
         return mesh
     
     def mesh_to_zip(

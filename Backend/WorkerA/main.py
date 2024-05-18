@@ -1,6 +1,6 @@
 import io
 
-from src.credentials import AWSCredentials
+from src.aws.credentials import AWSCredentials
 from src.model import MeshGenServerModel
 
 credentials = AWSCredentials.from_json_file("../credentials.json")
