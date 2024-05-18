@@ -3,8 +3,8 @@ import { ImageGenController } from './image_gen.js';
 import { MeshGenController } from './mesh_gen.js';
 
 // Init
-SERVER_URL = "http://127.0.0.1:8000"
-//SERVER_URL = "http://3.68.143.6:8000"
+const SERVER_URL = "http://127.0.0.1:8000"
+//const SERVER_URL = "http://3.68.143.6:8000"
 
 var model = new MeshGenModel(SERVER_URL);
 

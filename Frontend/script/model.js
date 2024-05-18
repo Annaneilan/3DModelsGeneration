@@ -39,7 +39,7 @@ class MeshLoader {
             console.log("Mesh loaded")
             var mesh = loadedMesh;
             mesh.name = "mesh";
-            mesh.position.set(-0.5, 0.5, 0);
+            //mesh.position.set(-0.5, 0.5, 0);
             this.onMeshLoaded(mesh);
         });
     }
@@ -72,7 +72,7 @@ class MeshLoader {
                         node.material = material;
                     }
                 });
-                mesh.position.set(-0.5, 0.5, 0);
+                //mesh.position.set(-0.5, 0.5, 0);
                 this.onMeshLoaded(mesh);
             });
         });
