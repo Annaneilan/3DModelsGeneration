@@ -210,6 +210,7 @@ class MeshGenServerModel:
         return mesh
     
     def create_texturless_mesh(
+        self,
         textured_mesh: o3d.geometry.TriangleMesh
     ) -> o3d.geometry.TriangleMesh:
         mesh = o3d.geometry.TriangleMesh()

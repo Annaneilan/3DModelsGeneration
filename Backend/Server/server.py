@@ -103,7 +103,7 @@ async def get_image(project_id: uuid.UUID):
 @app.post("/model")
 async def post_depth(request: serializable.MeshGenerationRequest):
     mesh_uuid = app_logic.request_mesh_generation(
-        request.image_uuid,
+        request.project_id,
         perspective=request.perspective,
     )
     return { "uuid": str(mesh_uuid) }

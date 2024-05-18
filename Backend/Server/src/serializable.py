@@ -6,7 +6,7 @@ class ImageGenerationRequest(BaseModel):
     negative_prompt: Optional[str] = None
 
 class MeshGenerationRequest(BaseModel):
-    image_uuid: UUID4
+    project_id: UUID4
     perspective: bool   # perspective or object
     textured: bool      # textured or non-textured
     #meshing: bool      # pc or mesh

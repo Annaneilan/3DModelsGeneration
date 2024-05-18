@@ -138,6 +138,9 @@ class MeshGenServerModel:
         # Send message
         self.sqs_image_gen.send_message(message)
         
+        # Add to pending tasks
+        self.pending_tasks["image_gen"].add(project_id)
+        
         return project_id
     
     def upload_image(
@@ -213,6 +216,8 @@ class MeshGenServerModel:
         perspective: bool = True,
         textured: bool = True
     ) -> RequestedResource:
+        print("Requested id", project_id)
+        print("Pending tasks", self.pending_tasks)
         
         # Task is not completed
         if perspective and project_id in self.pending_tasks["pmesh_gen"]:

@@ -240,7 +240,7 @@ input:focus {
     color: #212529; 
     background-color: #E1F25C; 
     font-family: "Kumbh Sans", sans-serif;
-    font-size: 1.3vw;
+    font-size: 1.2vw;
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s; 
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.239); 
