@@ -19,12 +19,11 @@ class MeshGenParamView {
     }
 
     getSelectedOptions() {
-        // Get perspective button and check if .active
-        let perspective = this.formDiv.querySelector('#gen-perspective-btn').classList.contains('active');
-        let textured = this.formDiv.querySelector('#gen-textured-btn').classList.contains('active');
-        let meshing = this.formDiv.querySelector('#gen-mesh-btn').classList.contains('active');
-
-        let result = new MeshGenParams(perspective, textured, meshing);
+        let result = new MeshGenParams(
+            this.formDiv.querySelector('#gen-perspective-btn').classList.contains('active'),
+            this.formDiv.querySelector('#gen-textured-btn').classList.contains('active'),
+            //this.formDiv.querySelector('#gen-mesh-btn').classList.contains('active')
+        );
         return result;
     }
 }
@@ -97,6 +96,8 @@ class MeshGenView {
         this.model.data.addListener('onImageDidChange', () => { this.updateImage(); });
         this.model.data.addListener('onMeshWillChange', () => { this.removeMeshFromScene(); });
         this.model.data.addListener('onMeshDidChange', () => { this.setMeshToScene(); });
+
+        this.model.addListener('onMeshRequestFailed', () => { this.activateGenerateButton(); });
     }
 
     // UI

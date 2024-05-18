@@ -42,6 +42,10 @@ class ImageGenView {
             'onImageDidChange',
             () => { this.updateImage(); }
         );
+        this.model.addListener(
+            'onImageRequestFailed',
+            () => { this.activateGenerateButton(); }
+        )
     }
 
     // Update UI

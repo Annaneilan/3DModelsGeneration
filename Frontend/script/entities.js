@@ -2,11 +2,11 @@ class MeshGenParams {
     constructor(
         perspective = true,
         textured = true,
-        meshing = true
+        //meshing = true
     ) {
         this.perspective = perspective;
         this.textured = textured;
-        this.meshing = meshing;
+        //this.meshing = meshing;
     }
 }
 

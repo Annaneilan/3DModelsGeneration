@@ -9,4 +9,4 @@ class MeshGenerationRequest(BaseModel):
     image_uuid: UUID4
     perspective: bool   # perspective or object
     textured: bool      # textured or non-textured
-    meshing: bool       # pc or mesh
+    #meshing: bool      # pc or mesh

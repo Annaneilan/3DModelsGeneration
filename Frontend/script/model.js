@@ -178,11 +178,33 @@ class MeshGenModel {
             }
         );
         console.log("MeshGenModel initialized");
+
+        // Events
+        this.listeners = {
+            onImageRequestFailed: [],
+            onMeshRequestFailed: [],
+        };
+    }
+
+    addListener(event, callback) {
+        console.log("[MeshGenModel:addListener] Adding listener for event: " + event);
+
+        if (this.listeners[event]) {
+            this.listeners[event].push(callback);
+        } else {
+            console.warn(`No event named ${event} found.`);
+        }
+    }
+
+    triggerEvent(event) {
+        console.log("[MeshGenModel:triggerEvent] Event: " + event);
+
+        if (this.listeners[event]) {
+            this.listeners[event].forEach(callback => callback());
+        }
     }
 
     async requestImageGen(promptData) {
-
-        // Request image generation
         //try {
             const response = await fetch(this.server_url + '/image', {
                 method: 'POST',
@@ -229,6 +251,7 @@ class MeshGenModel {
                 // Error
                 else {
                     console.error('Error:', response.message);
+                    this.triggerEvent('onImageRequestFailed');
                 }
             };
 
@@ -241,6 +264,7 @@ class MeshGenModel {
     }
 
     async requestMeshGen(genParams) {
+        //try {
         if (this.data.imageId === null) {
             // TODO: Upload image & get image id
             console.log("[MeshGenModel:requestMeshGen] No image to generate mesh from");
@@ -251,7 +275,7 @@ class MeshGenModel {
             image_uuid: this.data.imageId,
             perspective: genParams.perspective,
             textured: genParams.textured,
-            meshing: genParams.meshing
+            //meshing: genParams.meshing
         }
 
         const response = await fetch(this.server_url + '/model', {
@@ -272,6 +296,10 @@ class MeshGenModel {
 
         // Set image id
         this.data.meshId = meshId;
+
+        //} catch (error) {
+        //    console.error('Error:', error.message);
+        //}
 
         // Function to repeatedly check the status of the mesh generation task
         const checkMeshStatus = async () => {
@@ -300,9 +328,9 @@ class MeshGenModel {
             // Error
             else {
                 console.error('Error:', response.message);
+                this.triggerEvent('onMeshRequestFailed');
             }
         };
-
         checkMeshStatus();
     }
 
