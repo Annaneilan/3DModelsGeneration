@@ -108,7 +108,9 @@ class ImageGenController {
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                this.model.data.setImage(e.target.result, null);
+                // Set own image
+                this.model.data.setImage(e.target.result);
+                this.model.data.projectId = null;
             }
             reader.readAsDataURL(file);
 
