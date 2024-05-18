@@ -22,7 +22,6 @@ class MeshGenParamView {
         let result = new MeshGenParams(
             this.formDiv.querySelector('#gen-perspective-btn').classList.contains('active'),
             this.formDiv.querySelector('#gen-textured-btn').classList.contains('active'),
-            //this.formDiv.querySelector('#gen-mesh-btn').classList.contains('active')
         );
         return result;
     }
@@ -63,10 +62,10 @@ class MeshGenView {
     setupUIScene() {
         this.canvas = document.getElementById("meshCanvas");
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(55, 800 / 550, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(55, 800 / 470, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas });
 
-        this.renderer.setSize(800, 550);
+        this.renderer.setSize(800, 470);
         this.renderer.setClearColor(0x363a3e); 
 
         this.camera.position.z = 2.5;

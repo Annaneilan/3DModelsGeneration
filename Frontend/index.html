@@ -56,7 +56,7 @@
                 </div>  
                 <div style="position: relative; width: 450px;">
                     <img class="image-preview" id="generated-image" src="./page_image/placeholder1.png" alt="Generated Photo">
-                    <div class="button-group">
+                    <div class="button-image-group">
                         <label class="btn upload-btn">
                             Upload image
                             <input type="file" id="bt-upload-image" accept="image/*" style="display: none;">
@@ -73,52 +73,39 @@
             <div class="flex-container">
                 
                 <div class="left-column">
-                    <img class="image-preview" id="input-image" src="./page_image/placeholder1.png" alt="Generated Photo">
-                </div>
-
-                <div class="middle-column" id="gen-params">
-
                     <section class="text-info">
-                        <p>Select generation options</p>
+                        <p>Model Params:</p>
                     </section>
-
-                    <div class="btn-group">
-                        <button class="btn option active" id="gen-perspective-btn">
-                            <span class="option-text">Perspective</span>
-                        </button>
-                        <button class="btn option" id="gen-object-btn">
-                           <span class="option-text">Object</span>
-                        </button>
-                    </div> 
-
-                    <div class="btn-group">
-                        <button class="btn option active" id="gen-textured-btn">
-                            <span class="option-text">Textured</span>
-                        </button>
-                        <button class="btn option" id="gen-non-textured-btn">
-                            <span class="option-text">Non-Textured</span>
-                        </button>
+                    <img class="image-preview" id="input-image" src="./page_image/placeholder1.png" alt="Generated Photo">
+                    <div id="gen-params">
+                        <div class="btn-group">
+                            <button class="btn option active" id="gen-perspective-btn">
+                                <span class="option-text">Perspective</span>
+                            </button>
+                            <button class="btn option" id="gen-object-btn">
+                               <span class="option-text">Object</span>
+                            </button>
+                        </div> 
+    
+                        <div class="btn-group">
+                            <button class="btn option active" id="gen-textured-btn">
+                                <span class="option-text">Textured</span>
+                            </button>
+                            <button class="btn option" id="gen-non-textured-btn">
+                                <span class="option-text">Non-Textured</span>
+                            </button>
+                        </div>
                     </div>
-
-                    <div class="btn-group">
-                        <button class="btn option active" id="gen-mesh-btn">
-                            <span class="option-text">Mesh</span>
-                        </button>
-                        <button class="btn option" id="gen-pc-btn">
-                            <span class="option-text">Point Cloud</span>
-                        </button>
-                    </div>
-
-                    <button class="btn" id="generate-3d-model-btn" type="button">
-                        Generate Model
-                    </button>
-
                 </div>
+                
                 <div class="right-column" >
                     <div id="generated-3d-model">
                         <canvas id="meshCanvas"></canvas>
                     </div>
-                    <button class="btn" id="download-3d-model-btn">Download model</button>
+                    <div class="btn-group-mesh">
+                        <button class="btn" id="generate-3d-model-btn"> Generate Model </button>
+                        <button class="btn" id="download-3d-model-btn">Download model</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -160,18 +147,6 @@
                 mainPage.style.display = 'none';
             }
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.btn.option').forEach(button => {
-                button.addEventListener('click', function() {
-                    let siblings = this.parentNode.querySelectorAll('.btn.option');
-                    siblings.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-        });
     </script>
-    
-
 </body>
 </html>

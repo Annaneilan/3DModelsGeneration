@@ -216,9 +216,6 @@ class MeshGenServerModel:
         perspective: bool = True,
         textured: bool = True
     ) -> RequestedResource:
-        print("Requested id", project_id)
-        print("Pending tasks", self.pending_tasks)
-        
         # Task is not completed
         if perspective and project_id in self.pending_tasks["pmesh_gen"]:
             print("Task is not completed")
