@@ -10,10 +10,10 @@ import numpy as np
 import open3d as o3d
 
 # Local
-from . import depth, utils
-from .diffusion import load_2_1
-from .storage import S3Helper
-from .queue import SQSHelper, QueueMessage, AWSCredentials
+from . import depth, diffusion, utils
+from .aws.storage import S3Helper
+from .aws.queue import SQSHelper, QueueMessage
+from .aws.credentials import AWSCredentials
 
 class MeshGenServerModel:
     def __init__(
@@ -57,7 +57,7 @@ class MeshGenServerModel:
         )
     
     def setup_sd(self):
-        self.sd = load_2_1()
+        self.sd = diffusion.load_2_1()
     
     def setup_mde(self):
         self.mde = depth.DepthAnythingFacade(
