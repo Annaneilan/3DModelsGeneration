@@ -6,6 +6,7 @@ import threading
 
 # Local
 from . import utils
+from .data_key import DataKey
 from .storage import S3Helper
 from .queue import SQSHelper, QueueMessage, AWSCredentials
 from .resource import ResourceStatus, RequestedResource
@@ -45,7 +46,11 @@ class MeshGenServerModel:
         )
         
         # Identifier tracking
-        self.locked_identifiers = set() # Which uuids are assigned, but not yet completed
+        self.pending_tasks = {
+            "image_gen": set(),
+            "pmesh_gen": set(),
+            "omesh_gen": set()
+        }
         
         # Result observation thread
         self.result_observation_interval_s = 1
@@ -60,16 +65,10 @@ class MeshGenServerModel:
     
     def generate_identifier(
         self,
-        for_extension: str = "png"
     ) -> uuid.UUID:
-        # Generate random image uuid
         new_uuid = uuid.uuid4()
-        while new_uuid in self.locked_identifiers or \
-            self.s3_storage.file_exists(f"{str(new_uuid)}.{for_extension}"):
+        while self.s3_storage.file_exists(str(new_uuid)):
             new_uuid = uuid.uuid4()
-        
-        # Lock identifier locally
-        self.locked_identifiers.add(new_uuid)
         
         return new_uuid
     
@@ -77,7 +76,6 @@ class MeshGenServerModel:
         print("Observation Thread: Started")
         
         while not self.result_observation_termination_event.is_set():
-            #self.result_observation_termination_event.wait(self.result_observation_interval_s)
             print("Observation Thread: Running")
             # Read message
             messages = self.sqs_result.receive_messages(max_messages=10)
@@ -86,13 +84,19 @@ class MeshGenServerModel:
             for msg in messages:
                 
                 try:
+                    # Parse
                     body_json = msg.body_json()
-                    task_uuid = uuid.UUID(body_json["uuid"])
+                    project_id = uuid.UUID(body_json["project_id"])
+                    task_type = str(body_json["task_type"])
                     
-                    if task_uuid in self.locked_identifiers:
-                        self.locked_identifiers.remove(task_uuid)
+                    # Verify task type
+                    assert task_type in self.pending_tasks, "Invalid task type"
+                    
+                    # Remove from pending
+                    if project_id in self.pending_tasks[task_type]:
+                        self.pending_tasks[task_type].remove(project_id)
                     else:
-                        print("Received result for unknown task!")
+                        print(f"Task {project_id} not found in pending tasks of type {task_type}")
                 
                 except Exception as e:
                     print(f"Failed to process result message: {e}")
@@ -119,11 +123,11 @@ class MeshGenServerModel:
         negative_prompt: str = None
     ) -> uuid.UUID:
         # Generate image uuid
-        image_uuid = self.generate_identifier(for_extension="png")
+        project_id = self.generate_identifier()
         
         # Create task data
         task_data = {
-            "image_uuid": str(image_uuid),
+            "project_id": str(project_id),
             "positive_prompt": positive_prompt,
             "negative_prompt": negative_prompt
         }
@@ -134,14 +138,14 @@ class MeshGenServerModel:
         # Send message
         self.sqs_image_gen.send_message(message)
         
-        return image_uuid
+        return project_id
     
     def upload_image(
         self,
         image_bytes: bytes
     ) -> uuid.UUID:
         # Generate new uuid
-        image_uuid = self.generate_identifier(for_extension="png")
+        project_id = self.generate_identifier()
         
         # Resize to 512x512
         image = utils.open_image(io.BytesIO(image_bytes), mode="RGB")
@@ -154,26 +158,27 @@ class MeshGenServerModel:
          
         # Upload iamge
         self.s3_storage.upload_file(
-            f"{str(image_uuid)}.png",
+            DataKey.image(str(project_id)),
             buffer
         )
         
-        return image_uuid
+        return project_id
     
     def download_image(
         self,
-        image_uuid: uuid.UUID
+        project_id: uuid.UUID
     ) -> RequestedResource:
         # Task is not completed
-        if image_uuid in self.locked_identifiers:
+        if project_id in self.pending_tasks["image_gen"]:
             print("Task is not completed")
-            return RequestedResource(image_uuid, ResourceStatus.PENDING)
+            return RequestedResource(project_id, ResourceStatus.PENDING)
         
         # Try download image
-        image_buffer = self.s3_storage.download_file(f"{str(image_uuid)}.png")
+        image_buffer = self.s3_storage.download_file(DataKey.image(str(project_id)))
+        
         status = ResourceStatus.NOT_AVAILABLE if image_buffer is None else ResourceStatus.AVAILABLE
         result = RequestedResource(
-            image_uuid,
+            project_id,
             status,
             data=image_buffer
         )
@@ -182,67 +187,53 @@ class MeshGenServerModel:
     # Public (Mesh)
     ################################################################
     
-    #def request_mesh_generation(
-    #    self,
-    #    image_uuid: uuid.UUID,
-    #    perspective: bool = False
-    #) -> uuid.UUID:
-    #    # Validate image is uploaded to S3
-    #    assert self.s3_storage.file_exists(f"{str(image_uuid)}.png"), "Image not found!"
-    #    
-    #    # Generate mesh uuid
-    #    mesh_uuid = self.generate_identifier(for_extension="zip")
-    #    
-    #    # Create task
-    #    task_data = {
-    #        "image_uuid": str(image_uuid),
-    #        "mesh_uuid": str(mesh_uuid),
-    #    }
-    #    message = json.dumps(task_data)
-    #    
-    #    # Send message
-    #    queue = self.sqs_perspective_gen if perspective else self.sqs_object_gen
-    #    queue.send_message(message)
-    #    
-    #    return mesh_uuid
-    
     def request_mesh_generation(
         self,
-        image_uuid: uuid.UUID,
+        project_id: uuid.UUID,
         perspective: bool,
-    ) -> uuid.UUID:
+    ):
         # Validate image is uploaded to S3
-        assert self.s3_storage.file_exists(f"{str(image_uuid)}.png"), "Image not found!"
-        
-        # Generate mesh uuid
-        mesh_uuid = self.generate_identifier(for_extension="zip")
+        assert self.s3_storage.file_exists(DataKey.image(str(project_id))), "Image not found!"
         
         # Create task
-        task_data = {
-            "image_uuid": str(image_uuid),
-            "mesh_uuid": str(mesh_uuid),
-        }
+        task_data = { "project_id": str(project_id) }
         message = json.dumps(task_data)
         
-        # Send message
-        queue = self.sqs_perspective_gen if perspective else self.sqs_object_gen
-        queue.send_message(message)
-        
-        return mesh_uuid
+        # Task type
+        if perspective:
+            self.pending_tasks["pmesh_gen"].add(project_id)
+            self.sqs_perspective_gen.send_message(message)
+        else:
+            self.pending_tasks["omesh_gen"].add(project_id)
+            self.sqs_object_gen.send_message(message)
     
     def download_mesh_zip(
         self,
-        mesh_uuid: uuid.UUID
+        project_id: uuid.UUID,
+        perspective: bool = True,
+        textured: bool = True
     ) -> RequestedResource:
-        # Task is not completed
-        if mesh_uuid in self.locked_identifiers:
-            print("Task is not completed")
-            return RequestedResource(mesh_uuid, ResourceStatus.PENDING)
         
-        mesh_buffer = self.s3_storage.download_file(f"{str(mesh_uuid)}.zip")
+        # Task is not completed
+        if perspective and project_id in self.pending_tasks["pmesh_gen"]:
+            print("Task is not completed")
+            return RequestedResource(project_id, ResourceStatus.PENDING)
+        
+        elif project_id in self.pending_tasks["omesh_gen"]:
+            print("Task is not completed")
+            return RequestedResource(project_id, ResourceStatus.PENDING)
+
+        # Try download mesh
+        file_key = DataKey.mesh(
+            str(project_id),
+            perspective=perspective,
+            textured=textured
+        )
+        mesh_buffer = self.s3_storage.download_file(file_key)
+        
         status = ResourceStatus.NOT_AVAILABLE if mesh_buffer is None else ResourceStatus.AVAILABLE
         result = RequestedResource(
-            mesh_uuid,
+            project_id,
             status,
             data=mesh_buffer
         )

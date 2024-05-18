@@ -58,16 +58,30 @@ def root():
 
 @app.post("/image")
 async def post_image(request: serializable.ImageGenerationRequest):
-    #print("POST /image")
+    """
+    Generate image
+    """
+    print("POST /image")
+
     image_uuid = app_logic.request_image_generation(
         request.prompt,
         request.negative_prompt
     )
-    return { "uuid": str(image_uuid) }
+    return { "project_id": str(image_uuid) }
 
-@app.get("/image/{image_uuid}")
-async def get_image(image_uuid: uuid.UUID):
-    result = app_logic.download_image(image_uuid)
+@app.put("/image")
+async def put_image(request: Request):
+    """
+    Upload image
+    """
+    print("PUT /image")
+    image_bytes = await request.body()
+    image_uuid = app_logic.upload_image(image_bytes)
+    return { "project_id": str(image_uuid) }
+
+@app.get("/image/{project_id}")
+async def get_image(project_id: uuid.UUID):
+    result = app_logic.download_image(project_id)
     
     # Error
     if result.status == ResourceStatus.NOT_AVAILABLE:
@@ -83,12 +97,6 @@ async def get_image(image_uuid: uuid.UUID):
         media_type="image/png"
     )
 
-@app.put("/image")
-async def put_image(request: Request):
-    image_bytes = await request.body()
-    image_uuid = app_logic.upload_image(image_bytes)
-    return { "uuid": str(image_uuid) }
-
 # Mesh
 ################################################################
 
@@ -100,16 +108,9 @@ async def post_depth(request: serializable.MeshGenerationRequest):
     )
     return { "uuid": str(mesh_uuid) }
 
-#@app.get("/model")
-#async def get_model(request: serializable.MeshGenerationRequest):
-#    pass
-#    #TODO: 
-#    # Download mesh from s3
-#    # Convert to requested format
-
-@app.get("/model/{mesh_uuid}")
-async def get_mesh(mesh_uuid: uuid.UUID):
-    result = app_logic.download_mesh_zip(mesh_uuid)
+@app.get("/model/{project_id}")
+async def get_mesh(project_id: uuid.UUID, perspective: bool = True, textured: bool = True):
+    result = app_logic.download_mesh_zip(project_id, perspective, textured)
     
     # Error
     if result.status == ResourceStatus.NOT_AVAILABLE:

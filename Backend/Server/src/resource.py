@@ -11,10 +11,10 @@ class ResourceStatus(IntEnum):
 class RequestedResource:
     def __init__(
         self,
-        id: uuid.UUID,
+        project_id: uuid.UUID,
         status: ResourceStatus = ResourceStatus.PENDING,
         data: io.BytesIO = None
     ) -> None:
-        self.id = id
+        self.id = project_id
         self.status = status
         self.data = data
