@@ -1,0 +1,9 @@
+[Unit]
+Description=MG Server
+After=network.target
+
+[Service]
+ExecStart=/home/ubuntu/app/scripts/start.sh
+
+[Install]
+WantedBy=multi-user.target
