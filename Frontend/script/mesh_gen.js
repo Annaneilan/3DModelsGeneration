@@ -80,9 +80,9 @@ class MeshGenView {
         var ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(ambientLight);
 
-        //var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        //directionalLight.position.set(1, 1, 1);
-        //this.scene.add(directionalLight);
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(1, 1, 1);
+        this.scene.add(directionalLight);
     }
 
     setupControls() {

@@ -37,9 +37,22 @@ class MeshLoader {
     loadMesh(meshURL) {
         this.meshLoader.load(meshURL, (loadedMesh) => {
             console.log("Mesh loaded")
+
             var mesh = loadedMesh;
             mesh.name = "mesh";
-            //mesh.position.set(-0.5, 0.5, 0);
+            console.log(mesh);
+            
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xe1f25c, // grey color
+              });
+            
+            mesh.traverse((node) => {
+                if (node instanceof THREE.Mesh) {
+                    node.material = material;
+                    node.geometry.computeVertexNormals();
+                }
+            });
+            
             this.onMeshLoaded(mesh);
         });
     }
