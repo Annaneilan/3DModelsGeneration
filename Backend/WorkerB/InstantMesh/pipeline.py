@@ -190,9 +190,15 @@ def run(
     sample_steps=75,
     sample_seed=42
 ):
+    # Cleat GPU memory before running
+    torch.cuda.empty_cache()
+    
     processed_image = preprocess(image, do_remove_background)
     mv_images = generate_mvs(processed_image, sample_steps, sample_seed)
     planes = make3d(mv_images)
     vertices, uvs, faces, mesh_tex_idx, tex_map = make_mesh(planes)
+    
+    # Cleat GPU memory after running
+    torch.cuda.empty_cache()
     
     return vertices, uvs, faces, mesh_tex_idx, tex_map

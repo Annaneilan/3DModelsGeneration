@@ -28,8 +28,11 @@ async def lifespan(app: FastAPI):
     yield
     # On shutdown
     app_logic.destroy()
-
-app = FastAPI(lifespan=lifespan)
+    
+app = FastAPI(
+    lifespan=lifespan,
+    root_path="/api"
+)
 
 # Disable CORS for development
 app.add_middleware( 
